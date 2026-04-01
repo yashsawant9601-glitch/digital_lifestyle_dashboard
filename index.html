@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Digital Lifestyle Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #080810;
+    --surface: #10101c;
+    --card: #14141f;
+    --border: #1e1e30;
+    --text: #f0f0ff;
+    --muted: #7070a0;
+    --accent: #1db954;
+    --accent2: #7c4dff;
+    --accent3: #00b0ff;
+    --accent4: #ff4d6d;
+    --pill-bg: #1e1e30;
+    --shadow: 0 8px 32px rgba(0,0,0,0.45);
+    --radius: 14px;
+    --transition: 0.3s cubic-bezier(.4,0,.2,1);
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  [data-theme="light"] {
+    --bg: #f0f0f8;
+    --surface: #e4e4f0;
+    --card: #ffffff;
+    --border: #d0d0e8;
+    --text: #0a0a1a;
+    --muted: #6060a0;
+    --pill-bg: #e0e0f0;
+    --shadow: 0 4px 24px rgba(80,80,160,0.10);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background var(--transition), color var(--transition);
+    overflow-x: hidden;
+  }
+  /* ─── Layout ─── */
+  .container { max-width: 1380px; margin: 0 auto; padding: 0 24px 48px; }
+
+  /* ─── Header ─── */
+  header {
+    padding: 28px 0 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .header-left h1 {
+    font-family: var(--font-display);
+    font-size: 1.85rem; font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent3) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-left p { color: var(--muted); font-size: 0.82rem; margin-top: 3px; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .stat-pill {
+    background: var(--pill-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 13px;
+    font-size: 0.75rem; color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+    transition: background var(--transition);
+  }
+  .stat-pill strong { color: var(--text); font-family: var(--font-display); font-size: 0.85rem; }
+  .theme-toggle {
+    background: var(--pill-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 7px 16px;
+    cursor: pointer; color: var(--text);
+    font-family: var(--font-body); font-size: 0.78rem;
+    display: flex; align-items: center; gap: 6px;
+    transition: all var(--transition);
+  }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ─── KPI Cards ─── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px; margin-bottom: 22px;
+  }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    position: relative; overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .kpi-card:nth-child(1)::before { background: linear-gradient(90deg, var(--accent), var(--accent3)); }
+  .kpi-card:nth-child(2)::before { background: linear-gradient(90deg, var(--accent3), var(--accent2)); }
+  .kpi-card:nth-child(3)::before { background: linear-gradient(90deg, var(--accent4), #ff9f43); }
+  .kpi-card:nth-child(4)::before { background: linear-gradient(90deg, var(--accent2), #e040fb); }
+  .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,0,0,0.35); }
+  .kpi-icon { font-size: 1.5rem; margin-bottom: 8px; }
+  .kpi-value {
+    font-family: var(--font-display);
+    font-size: 2rem; font-weight: 800;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  .kpi-label { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+  /* ─── Chart Rows ─── */
+  .chart-row { display: grid; gap: 14px; margin-bottom: 14px; }
+  .row-2-wide { grid-template-columns: 1.2fr 1fr; }
+  .row-3 { grid-template-columns: repeat(3, 1fr); }
+  .row-2 { grid-template-columns: 1fr 1fr; }
+
+  /* ─── Chart Card ─── */
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    transition: transform var(--transition), background var(--transition);
+    position: relative;
+  }
+  .chart-card:hover { transform: translateY(-2px); }
+  .chart-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .chart-title {
+    font-family: var(--font-display);
+    font-size: 0.82rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text);
+  }
+  .dl-btn {
+    background: var(--pill-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 9px; cursor: pointer;
+    font-size: 0.7rem; color: var(--muted);
+    display: flex; align-items: center; gap: 4px;
+    transition: all var(--transition);
+    font-family: var(--font-body);
+  }
+  .dl-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .chart-wrap { position: relative; height: 210px; }
+  .chart-desc {
+    margin-top: 10px;
+    font-size: 0.73rem;
+    color: var(--muted);
+    line-height: 1.5;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ─── Top Users ─── */
+  .top-users-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+    transition: background var(--transition);
+  }
+  .top-users-title {
+    font-family: var(--font-display);
+    font-size: 0.95rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .top-users-title span { color: var(--accent); }
+  .user-row {
+    display: grid;
+    grid-template-columns: 28px 100px 1fr 60px;
+    align-items: center; gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    transition: background var(--transition);
+  }
+  .user-row:last-child { border-bottom: none; }
+  .user-rank {
+    font-family: var(--font-display);
+    font-size: 0.75rem; color: var(--muted);
+    text-align: right;
+  }
+  .user-rank.gold { color: #ffd700; }
+  .user-id { font-size: 0.78rem; font-family: var(--font-display); font-weight: 700; }
+  .user-bar-wrap { position: relative; }
+  .user-bar-bg {
+    height: 6px; background: var(--border);
+    border-radius: 3px; overflow: hidden;
+  }
+  .user-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    transition: width 1s cubic-bezier(.4,0,.2,1);
+  }
+  .user-val { font-family: var(--font-display); font-size: 0.8rem; text-align: right; color: var(--accent); }
+
+  /* ─── Dataset Section ─── */
+  .dataset-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px; margin-bottom: 14px;
+    box-shadow: var(--shadow);
+    transition: background var(--transition);
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem; font-weight: 800;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%; background: var(--accent);
+    display: inline-block;
+  }
+  .about-para { font-size: 0.83rem; color: var(--muted); line-height: 1.7; }
+
+  /* Column table */
+  .col-table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 0.78rem; }
+  .col-table th {
+    background: var(--surface); color: var(--muted);
+    font-family: var(--font-display); font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    padding: 8px 12px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .col-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .col-table tr:last-child td { border-bottom: none; }
+  .col-table tr:hover td { background: var(--surface); }
+  .badge {
+    display: inline-block;
+    background: var(--pill-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 7px; font-size: 0.68rem;
+    color: var(--muted); font-family: var(--font-display);
+  }
+  .badge.num { color: var(--accent3); border-color: var(--accent3); }
+  .badge.cat { color: var(--accent2); border-color: var(--accent2); }
+  .badge.id  { color: var(--muted); }
+
+  /* Data table */
+  .data-table-wrap {
+    max-height: 420px; overflow-y: auto;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    margin-top: 14px;
+  }
+  .data-table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+  .data-table-wrap::-webkit-scrollbar-track { background: var(--surface); }
+  .data-table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .data-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.72rem; min-width: 900px;
+  }
+  .data-table th {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--surface); color: var(--muted);
+    font-family: var(--font-display); font-size: 0.67rem;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    padding: 9px 10px; text-align: left;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  .data-table td {
+    padding: 6px 10px; border-bottom: 1px solid var(--border);
+    color: var(--text); white-space: nowrap;
+  }
+  .data-table tr:hover td { background: var(--surface); }
+  .data-table .uid { color: var(--accent); font-family: var(--font-display); font-weight: 600; }
+  .loading-row td { text-align: center; padding: 20px; color: var(--muted); }
+
+  /* footer */
+  footer {
+    text-align: center; padding: 24px 0 12px;
+    font-size: 0.73rem; color: var(--muted);
+    border-top: 1px solid var(--border); margin-top: 28px;
+    letter-spacing: 0.5px;
+  }
+
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2,1fr); }
+    .row-2-wide, .row-3, .row-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 540px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .header-right { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-left">
+      <h1>Digital Lifestyle Analytics</h1>
+      <p>Indian Digital Behaviour · 38,928 Users · 15 Dimensions</p>
+    </div>
+    <div class="header-right">
+      <div class="stat-pill">👥 <strong>38,928</strong> Users</div>
+      <div class="stat-pill">📱 <strong>6.79h</strong> Avg Screen</div>
+      <div class="stat-pill">😴 <strong>6.90h</strong> Avg Sleep</div>
+      <div class="stat-pill">⚡ <strong>6.02</strong> Stress</div>
+      <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">🌙 Dark Mode</button>
+    </div>
+  </header>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon">📱</div>
+      <div class="kpi-value">6.79<span style="font-size:1rem;opacity:.5">h</span></div>
+      <div class="kpi-label">Avg Screen Time / Day</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">😴</div>
+      <div class="kpi-value">6.90<span style="font-size:1rem;opacity:.5">h</span></div>
+      <div class="kpi-label">Avg Sleep Duration</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">⚡</div>
+      <div class="kpi-value">6.02<span style="font-size:1rem;opacity:.5">/10</span></div>
+      <div class="kpi-label">Avg Stress Level</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">⚖️</div>
+      <div class="kpi-value">8.08<span style="font-size:1rem;opacity:.5">/10</span></div>
+      <div class="kpi-label">Work-Life Balance Score</div>
+    </div>
+  </div>
+
+  <div class="chart-row row-2-wide">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Screen Time by State</div>
+        <button class="dl-btn" onclick="downloadChart('stateChart','screen-time-state')">⬇ PNG</button>
+      </div>
+      <div class="chart-wrap"><canvas id="stateChart"></canvas></div>
+      <div class="chart-desc">Delhi leads with highest average daily screen time at 6.90 hrs. Screen time variation across states is relatively tight, suggesting nationwide digital adoption. Tier 1 cities in high-connectivity states dominate.</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Income by Occupation (₹K)</div>
+        <button class="dl-btn" onclick="downloadChart('occChart','income-occupation')">⬇ PNG</button>
+      </div>
+      <div class="chart-wrap"><canvas id="occChart"></canvas></div>
+      <div class="chart-desc">Corporate and Healthcare professionals earn highest incomes (₹600K+), while Students and Unemployed earn significantly less. Tech workers sit in the middle tier at ~₹350K annually.</div>
+    </div>
+  </div>
+
+  <div class="chart-row row-3">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Gender Distribution</div>
+        <button class="dl-btn" onclick="downloadChart('genderChart','gender-dist')">⬇ PNG</button>
+      </div>
+      <div class="chart-wrap"><canvas id="genderChart"></canvas></div>
+      <div class="chart-desc">Males account for 57.8%, Females 41.1%, and Non-binary users 1.1%. The dataset captures diverse gender representation across Indian digital users.</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Age vs Screen Time (hrs)</div>
+        <button class="dl-btn" onclick="downloadChart('ageChart','age-screen-time')">⬇ PNG</button>
+      </div>
+      <div class="chart-wrap"><canvas id="ageChart"></canvas></div>
+      <div class="chart-desc">Screen time peaks sharply in teens and early 20s (7.5–7.9 hrs), then steadily declines with age. Users above 40 average under 5 hrs, showing a clear generational digital divide.</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Sleep vs Stress Level</div>
+        <button class="dl-btn" onclick="downloadChart('sleepStressChart','sleep-vs-stress')">⬇ PNG</button>
+      </div>
+      <div class="chart-wrap"><canvas id="sleepStressChart"></canvas></div>
+      <div class="chart-desc">Strong negative correlation — users sleeping under 5 hrs consistently report stress levels of 8–10. Better sleep (7–9 hrs) aligns with significantly lower stress (2–4), confirming sleep as a critical wellness factor.</div>
+    </div>
+  </div>
+
+  <div class="chart-row row-2">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Screen Time vs Work-Life Balance</div>
+        <button class="dl-btn" onclick="downloadChart('wlbChart','screen-vs-wlb')">⬇ PNG</button>
+      </div>
+      <div class="chart-wrap"><canvas id="wlbChart"></canvas></div>
+      <div class="chart-desc">Higher screen time (10–18 hrs) is associated with lower work-life balance scores (2–5). Users with moderate screen time (4–8 hrs) report the best balance, suggesting a healthy digital usage zone.</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">App Usage Distribution</div>
+        <button class="dl-btn" onclick="downloadChart('appChart','app-usage-dist')">⬇ PNG</button>
+      </div>
+      <div class="chart-wrap"><canvas id="appChart"></canvas></div>
+      <div class="chart-desc">Social media dominates app usage at 36.7%, followed by Productivity (27.8%) and Gaming (20.6%). News consumption at 14.9% reflects India's growing digital news audience.</div>
+    </div>
+  </div>
+
+  <div class="top-users-card">
+    <div class="top-users-title">🏆 Top Screen Time <span>Users</span></div>
+    <div id="topUsersGrid"></div>
+  </div>
+
+  <div class="dataset-section">
+    <div class="section-title"><span class="dot"></span>About This Dataset</div>
+    <p class="about-para">
+      The <strong>Indian Digital Lifestyle Dataset</strong> captures the digital behaviour and wellbeing patterns of 38,928 users spanning multiple Indian states, city tiers, age groups, and occupations. Collected to understand the intersection of technology use and personal health, it tracks daily screen time, social media consumption, app usage categories, sleep quality, stress indicators, physical activity, and work-life balance scores. This dataset enables analysis of how digital habits correlate with mental and physical wellbeing across diverse socioeconomic profiles in India — offering insights for policymakers, health researchers, and product teams focused on digital wellness interventions.
+    </p>
+  </div>
+
+  <div class="dataset-section">
+    <div class="section-title"><span class="dot"></span>Column Descriptions</div>
+    <table class="col-table">
+      <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><strong>User_ID</strong></td><td><span class="badge id">ID</span></td><td>Unique identifier for each user (e.g., UID00001)</td></tr>
+        <tr><td><strong>State</strong></td><td><span class="badge cat">Categorical</span></td><td>Indian state the user belongs to</td></tr>
+        <tr><td><strong>City_Tier</strong></td><td><span class="badge cat">Categorical</span></td><td>Urban classification: Tier 1 (metro), Tier 2, or Tier 3</td></tr>
+        <tr><td><strong>Age</strong></td><td><span class="badge num">Numeric</span></td><td>User's age in years</td></tr>
+        <tr><td><strong>Gender</strong></td><td><span class="badge cat">Categorical</span></td><td>User's gender identity (Male, Female, Non-binary)</td></tr>
+        <tr><td><strong>Occupation</strong></td><td><span class="badge cat">Categorical</span></td><td>Employment category: Corporate, Tech, Healthcare, Freelancer, Student, Unemployed</td></tr>
+        <tr><td><strong>Income_INR</strong></td><td><span class="badge num">Numeric</span></td><td>Annual income in Indian Rupees</td></tr>
+        <tr><td><strong>Total_Screen_Time</strong></td><td><span class="badge num">Numeric</span></td><td>Total daily screen time in hours across all devices</td></tr>
+        <tr><td><strong>Social_Media_Hours</strong></td><td><span class="badge num">Numeric</span></td><td>Hours per day spent on social media platforms</td></tr>
+        <tr><td><strong>App_Usage_Category</strong></td><td><span class="badge cat">Categorical</span></td><td>Primary app category: Social, Productivity, Gaming, News</td></tr>
+        <tr><td><strong>Notification_Interaction_Rate</strong></td><td><span class="badge num">Numeric</span></td><td>% of notifications the user interacts with (0–100)</td></tr>
+        <tr><td><strong>Sleep_Hours</strong></td><td><span class="badge num">Numeric</span></td><td>Average daily sleep duration in hours</td></tr>
+        <tr><td><strong>Stress_Level</strong></td><td><span class="badge num">Numeric</span></td><td>Self-reported stress on a scale of 1 (low) to 10 (high)</td></tr>
+        <tr><td><strong>Physical_Activity_Level</strong></td><td><span class="badge cat">Categorical</span></td><td>Activity category: Low, Medium, High</td></tr>
+        <tr><td><strong>Work_Life_Balance_Score</strong></td><td><span class="badge num">Numeric</span></td><td>Work-life balance rating from 1 (poor) to 10 (excellent)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="dataset-section">
+    <div class="section-title"><span class="dot"></span>Dataset Preview <span style="font-size:0.75rem;color:var(--muted);font-weight:400;font-family:var(--font-body);"> — All 38,928 rows (virtual scroll)</span></div>
+    <div class="data-table-wrap" id="tableWrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>User ID</th><th>State</th><th>City Tier</th><th>Age</th><th>Gender</th>
+            <th>Occupation</th><th>Income (₹)</th><th>Screen (h)</th><th>Social (h)</th>
+            <th>App Category</th><th>Notif Rate</th><th>Sleep (h)</th><th>Stress</th>
+            <th>Activity</th><th>WLB Score</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr class="loading-row"><td colspan="15">⏳ Loading dataset...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px;font-size:0.7rem;color:var(--muted);text-align:right;" id="rowCounter"></div>
+  </div>
+
+  <footer>Data used for educational purposes · Indian Digital Lifestyle Dataset · 38,928 records · Built with Chart.js</footer>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  DATA (Hardcoded for charts/KPIs)
+// ══════════════════════════════════════════
+const CHART_DATA = {"kpis":{"avg_screen":6.79,"avg_sleep":6.9,"avg_stress":6.02,"avg_wlb":8.08,"total_users":38928},"state_screen":[{"state":"Delhi","avg":6.9},{"state":"West Bengal","avg":6.86},{"state":"Kerala","avg":6.85},{"state":"Rajasthan","avg":6.83},{"state":"Telangana","avg":6.81},{"state":"Karnataka","avg":6.79},{"state":"Uttar Pradesh","avg":6.78},{"state":"Tamil Nadu","avg":6.76},{"state":"Maharashtra","avg":6.75},{"state":"Gujarat","avg":6.66}],"occ_income":[{"occ":"Unemployed","avg":21.1},{"occ":"Student","avg":22.1},{"occ":"Freelancer","avg":265.3},{"occ":"Tech","avg":349.5},{"occ":"Healthcare","avg":560.4},{"occ":"Corporate","avg":609.9}],"gender":{"Male":22500,"Female":16009,"Non-binary":419},"age_screen":[{"age":"18","avg":7.86},{"age":"19","avg":7.78},{"age":"20","avg":7.84},{"age":"21","avg":7.76},{"age":"22","avg":7.82},{"age":"23","avg":7.63},{"age":"24","avg":7.57},{"age":"25","avg":7.51},{"age":"26","avg":7.19},{"age":"27","avg":6.99},{"age":"28","avg":6.76},{"age":"29","avg":6.67},{"age":"30","avg":6.34},{"age":"31","avg":6.43},{"age":"32","avg":6.33},{"age":"33","avg":6.31},{"age":"34","avg":6.15},{"age":"35","avg":6.11},{"age":"36","avg":6.06},{"age":"37","avg":6.09},{"age":"38","avg":5.93},{"age":"39","avg":5.78},{"age":"40","avg":5.3},{"age":"41","avg":5.31},{"age":"42","avg":5.19},{"age":"43","avg":4.84},{"age":"44","avg":4.79},{"age":"45","avg":4.39},{"age":"46","avg":4.56},{"age":"47","avg":4.37},{"age":"48","avg":4.24},{"age":"49","avg":4.02},{"age":"50","avg":3.96},{"age":"51","avg":4.08},{"age":"52","avg":3.84},{"age":"53","avg":4.31},{"age":"54","avg":3.99},{"age":"55","avg":4.12},{"age":"56","avg":3.97},{"age":"57","avg":4.06},{"age":"58","avg":4.34},{"age":"59","avg":3.97},{"age":"60","avg":4.76},{"age":"61","avg":4.33},{"age":"62","avg":4.05},{"age":"63","avg":3.87},{"age":"64","avg":3.62},{"age":"65","avg":3.9},{"age":"66","avg":5.41},{"age":"67","avg":4.84}],"app_dist":{"Social":14284,"News":5804,"Productivity":10827,"Gaming":8013},"scatter_sleep_stress":[{"x":6.0,"y":6},{"x":7.4,"y":4},{"x":5.0,"y":9},{"x":7.0,"y":7},{"x":4.7,"y":9},{"x":5.5,"y":8},{"x":8.3,"y":6},{"x":6.6,"y":8},{"x":8.6,"y":2},{"x":6.4,"y":8},{"x":9.6,"y":4},{"x":5.6,"y":8},{"x":5.6,"y":9},{"x":6.7,"y":7},{"x":6.4,"y":6},{"x":8.8,"y":4},{"x":7.9,"y":4},{"x":8.3,"y":4},{"x":6.0,"y":6},{"x":7.7,"y":5},{"x":7.9,"y":2},{"x":8.2,"y":4},{"x":7.1,"y":5},{"x":6.7,"y":7},{"x":7.6,"y":3},{"x":5.9,"y":7},{"x":4.2,"y":9},{"x":9.4,"y":1},{"x":7.2,"y":4},{"x":7.6,"y":5},{"x":6.8,"y":7},{"x":3.2,"y":10},{"x":6.6,"y":8},{"x":6.0,"y":9},{"x":7.9,"y":4},{"x":7.6,"y":6},{"x":8.3,"y":8},{"x":5.4,"y":9},{"x":5.4,"y":10},{"x":8.9,"y":4},{"x":7.1,"y":4},{"x":7.6,"y":8},{"x":5.9,"y":9},{"x":7.2,"y":7},{"x":6.5,"y":5},{"x":5.9,"y":8},{"x":7.1,"y":7},{"x":8.0,"y":3},{"x":7.9,"y":3},{"x":9.8,"y":2},{"x":7.2,"y":3},{"x":7.0,"y":8},{"x":8.3,"y":4},{"x":6.4,"y":8},{"x":7.9,"y":4},{"x":6.2,"y":7},{"x":4.3,"y":10},{"x":7.1,"y":6},{"x":6.1,"y":7},{"x":7.9,"y":3},{"x":6.9,"y":7},{"x":8.0,"y":4},{"x":4.6,"y":9},{"x":6.6,"y":7},{"x":7.2,"y":6},{"x":8.4,"y":5},{"x":5.6,"y":8},{"x":6.5,"y":8},{"x":6.0,"y":9},{"x":8.4,"y":3},{"x":7.8,"y":4},{"x":7.9,"y":4},{"x":6.9,"y":5},{"x":7.7,"y":4},{"x":8.3,"y":1},{"x":6.7,"y":7},{"x":7.4,"y":3},{"x":7.6,"y":5},{"x":6.4,"y":6},{"x":7.7,"y":4},{"x":6.2,"y":7},{"x":5.6,"y":7},{"x":8.4,"y":4},{"x":7.4,"y":6},{"x":6.9,"y":8},{"x":9.9,"y":1},{"x":7.2,"y":5},{"x":7.2,"y":6},{"x":6.9,"y":6},{"x":6.0,"y":9},{"x":6.7,"y":5},{"x":7.8,"y":6},{"x":8.0,"y":4},{"x":6.8,"y":8},{"x":5.9,"y":7},{"x":5.0,"y":10},{"x":6.1,"y":8},{"x":7.4,"y":7},{"x":6.1,"y":8},{"x":8.1,"y":4},{"x":7.7,"y":7},{"x":5.7,"y":9},{"x":6.0,"y":7},{"x":6.9,"y":7},{"x":7.9,"y":4},{"x":5.6,"y":7},{"x":7.7,"y":3},{"x":6.6,"y":9},{"x":7.5,"y":5},{"x":5.9,"y":6},{"x":8.2,"y":4},{"x":7.2,"y":7},{"x":6.9,"y":6},{"x":7.6,"y":7},{"x":7.9,"y":5},{"x":7.4,"y":4},{"x":7.5,"y":5},{"x":6.8,"y":6},{"x":8.4,"y":5},{"x":7.2,"y":6},{"x":6.1,"y":7},{"x":8.8,"y":4},{"x":5.2,"y":7},{"x":6.2,"y":6},{"x":7.3,"y":5},{"x":6.7,"y":8},{"x":5.7,"y":6},{"x":8.8,"y":1},{"x":5.5,"y":5},{"x":6.1,"y":8},{"x":7.8,"y":5},{"x":7.0,"y":6},{"x":6.9,"y":5},{"x":7.0,"y":7},{"x":7.5,"y":6},{"x":5.6,"y":7},{"x":6.9,"y":4},{"x":6.3,"y":8},{"x":8.1,"y":5},{"x":8.0,"y":5},{"x":6.6,"y":5},{"x":8.1,"y":3},{"x":8.9,"y":2},{"x":6.8,"y":7},{"x":8.1,"y":3},{"x":8.2,"y":5},{"x":7.1,"y":5},{"x":6.6,"y":6},{"x":8.4,"y":5},{"x":9.7,"y":2},{"x":7.2,"y":5},{"x":5.5,"y":8},{"x":6.2,"y":6},{"x":6.9,"y":5},{"x":7.0,"y":7},{"x":8.8,"y":2},{"x":8.8,"y":4},{"x":6.8,"y":3},{"x":6.6,"y":8},{"x":7.2,"y":6},{"x":7.5,"y":4},{"x":6.6,"y":6},{"x":9.1,"y":4},{"x":7.5,"y":5},{"x":6.3,"y":7},{"x":7.6,"y":7},{"x":6.6,"y":5},{"x":5.3,"y":7},{"x":7.8,"y":5},{"x":5.4,"y":10},{"x":7.8,"y":4},{"x":8.7,"y":1},{"x":8.5,"y":4},{"x":7.0,"y":5},{"x":6.7,"y":5},{"x":6.8,"y":6},{"x":9.1,"y":2},{"x":5.5,"y":6},{"x":6.6,"y":6},{"x":6.5,"y":8},{"x":8.0,"y":4},{"x":6.6,"y":7},{"x":7.1,"y":6},{"x":7.4,"y":3},{"x":6.6,"y":6},{"x":9.5,"y":3},{"x":7.3,"y":5},{"x":6.0,"y":8},{"x":9.1,"y":3},{"x":8.3,"y":2},{"x":4.0,"y":10},{"x":7.1,"y":5},{"x":6.6,"y":7},{"x":6.8,"y":7},{"x":6.1,"y":6},{"x":6.6,"y":8},{"x":7.9,"y":4},{"x":7.7,"y":5},{"x":6.0,"y":10},{"x":7.1,"y":7},{"x":7.9,"y":5},{"x":8.7,"y":2},{"x":6.2,"y":7},{"x":6.8,"y":7},{"x":5.2,"y":9},{"x":7.2,"y":7},{"x":6.3,"y":6},{"x":8.2,"y":2},{"x":6.2,"y":7},{"x":6.4,"y":5},{"x":8.0,"y":3},{"x":5.9,"y":9},{"x":6.6,"y":7},{"x":7.1,"y":5},{"x":7.4,"y":7},{"x":6.0,"y":7},{"x":7.0,"y":7},{"x":6.0,"y":7},{"x":6.8,"y":7},{"x":7.1,"y":5},{"x":7.6,"y":4},{"x":5.1,"y":10},{"x":7.7,"y":3},{"x":6.2,"y":6},{"x":9.0,"y":3},{"x":5.7,"y":8},{"x":7.3,"y":5},{"x":7.7,"y":4},{"x":5.9,"y":6},{"x":7.3,"y":7},{"x":5.9,"y":8},{"x":8.2,"y":4},{"x":8.0,"y":6},{"x":7.6,"y":4},{"x":4.7,"y":9},{"x":6.5,"y":6},{"x":6.8,"y":7},{"x":6.7,"y":7},{"x":8.5,"y":5},{"x":4.5,"y":9},{"x":5.6,"y":7},{"x":5.2,"y":7},{"x":5.8,"y":7},{"x":6.0,"y":7},{"x":6.1,"y":7},{"x":8.1,"y":2},{"x":6.7,"y":8},{"x":7.3,"y":6},{"x":7.7,"y":5},{"x":6.7,"y":5},{"x":5.0,"y":8},{"x":8.0,"y":5},{"x":5.6,"y":9},{"x":7.5,"y":6},{"x":7.4,"y":4},{"x":7.3,"y":6},{"x":6.4,"y":6},{"x":6.2,"y":6},{"x":7.4,"y":6},{"x":8.5,"y":4},{"x":6.0,"y":6},{"x":6.6,"y":6},{"x":6.6,"y":9},{"x":8.1,"y":2},{"x":6.7,"y":5},{"x":8.2,"y":3},{"x":7.4,"y":5},{"x":6.5,"y":5},{"x":7.7,"y":6},{"x":7.0,"y":8},{"x":5.5,"y":7},{"x":8.6,"y":5},{"x":7.9,"y":5},{"x":7.2,"y":7},{"x":5.9,"y":9},{"x":4.7,"y":9},{"x":7.1,"y":6},{"x":5.4,"y":8},{"x":6.9,"y":5},{"x":5.3,"y":8},{"x":6.0,"y":5},{"x":4.7,"y":9},{"x":6.1,"y":7},{"x":6.7,"y":7},{"x":6.1,"y":9},{"x":7.8,"y":5},{"x":7.1,"y":6},{"x":5.5,"y":7},{"x":7.2,"y":6},{"x":8.0,"y":3},{"x":8.2,"y":1},{"x":5.3,"y":6},{"x":8.7,"y":4},{"x":6.2,"y":5},{"x":8.1,"y":5},{"x":6.3,"y":7},{"x":7.8,"y":3},{"x":3.8,"y":10},{"x":4.3,"y":7},{"x":6.9,"y":5}],"scatter_screen_wlb":[{"x":7.4,"y":7.0},{"x":5.0,"y":10.0},{"x":8.8,"y":4.0},{"x":6.3,"y":9.0},{"x":11.4,"y":5.0},{"x":6.8,"y":7.0},{"x":9.4,"y":10.0},{"x":9.0,"y":6.0},{"x":2.0,"y":10.0},{"x":4.4,"y":6.0},{"x":4.2,"y":10.0},{"x":7.7,"y":7.0},{"x":7.4,"y":3.0},{"x":7.1,"y":7.0},{"x":7.2,"y":9.0},{"x":8.5,"y":10.0},{"x":4.0,"y":10.0},{"x":5.9,"y":10.0},{"x":4.8,"y":7.0},{"x":7.0,"y":10.0},{"x":1.3,"y":9.0},{"x":5.5,"y":10.0},{"x":6.4,"y":10.0},{"x":10.8,"y":9.0},{"x":1.2,"y":10.0},{"x":7.5,"y":6.0},{"x":13.5,"y":3.0},{"x":2.0,"y":10.0},{"x":4.9,"y":10.0},{"x":6.9,"y":10.0},{"x":8.5,"y":9.0},{"x":18.0,"y":3.0},{"x":5.7,"y":8.0},{"x":5.6,"y":5.0},{"x":5.2,"y":9.0},{"x":3.5,"y":8.0},{"x":8.2,"y":9.0},{"x":8.1,"y":5.0},{"x":9.4,"y":5.0},{"x":6.5,"y":10.0},{"x":3.8,"y":10.0},{"x":6.9,"y":8.0},{"x":9.1,"y":5.0},{"x":9.9,"y":9.0},{"x":8.3,"y":9.0},{"x":9.6,"y":8.0},{"x":8.4,"y":9.0},{"x":3.4,"y":10.0},{"x":7.6,"y":10.0},{"x":3.1,"y":10.0},{"x":3.1,"y":10.0},{"x":9.4,"y":8.0},{"x":2.8,"y":10.0},{"x":6.9,"y":6.0},{"x":6.3,"y":10.0},{"x":8.4,"y":8.0},{"x":6.7,"y":4.0},{"x":2.2,"y":9.0},{"x":4.6,"y":7.0},{"x":6.2,"y":10.0},{"x":12.0,"y":7.0},{"x":1.7,"y":10.0},{"x":12.5,"y":4.0},{"x":10.8,"y":7.0},{"x":3.6,"y":9.0},{"x":7.4,"y":10.0},{"x":7.8,"y":6.0},{"x":8.4,"y":7.0},{"x":5.2,"y":5.0},{"x":3.2,"y":10.0},{"x":5.2,"y":10.0},{"x":2.4,"y":10.0},{"x":3.2,"y":9.0},{"x":2.3,"y":10.0},{"x":1.3,"y":10.0},{"x":6.7,"y":8.0},{"x":3.2,"y":10.0},{"x":7.1,"y":8.0},{"x":8.9,"y":8.0},{"x":6.9,"y":10.0},{"x":9.0,"y":9.0},{"x":7.5,"y":5.0},{"x":4.2,"y":10.0},{"x":5.0,"y":9.0},{"x":8.0,"y":7.0},{"x":2.2,"y":10.0},{"x":5.5,"y":9.0},{"x":8.5,"y":10.0},{"x":5.3,"y":9.0},{"x":7.1,"y":7.0},{"x":3.5,"y":7.0},{"x":4.7,"y":10.0},{"x":4.8,"y":10.0},{"x":10.4,"y":8.0},{"x":6.0,"y":6.0},{"x":6.6,"y":4.0},{"x":6.1,"y":6.0},{"x":2.1,"y":7.0},{"x":9.4,"y":6.0},{"x":5.8,"y":10.0},{"x":8.3,"y":10.0},{"x":8.1,"y":6.0},{"x":10.2,"y":7.0},{"x":5.0,"y":7.0},{"x":3.9,"y":10.0},{"x":4.0,"y":7.0},{"x":4.9,"y":9.0},{"x":7.4,"y":6.0},{"x":5.0,"y":10.0},{"x":8.7,"y":8.0},{"x":6.3,"y":10.0},{"x":8.2,"y":9.0},{"x":8.9,"y":9.0},{"x":6.2,"y":10.0},{"x":5.8,"y":10.0},{"x":8.6,"y":10.0},{"x":7.2,"y":9.0},{"x":11.8,"y":9.0},{"x":7.2,"y":10.0},{"x":4.3,"y":9.0},{"x":6.0,"y":8.0},{"x":6.1,"y":10.0},{"x":11.6,"y":5.0},{"x":6.2,"y":8.0},{"x":5.5,"y":10.0},{"x":4.0,"y":7.0},{"x":14.6,"y":7.0},{"x":1.5,"y":10.0},{"x":9.9,"y":6.0},{"x":5.5,"y":7.0},{"x":7.4,"y":10.0},{"x":5.9,"y":9.0},{"x":6.7,"y":9.0},{"x":5.9,"y":9.0},{"x":8.6,"y":9.0},{"x":7.7,"y":6.0},{"x":8.2,"y":10.0},{"x":8.7,"y":9.0},{"x":4.0,"y":10.0},{"x":7.0,"y":10.0},{"x":6.9,"y":8.0},{"x":6.3,"y":10.0},{"x":4.0,"y":10.0},{"x":9.6,"y":9.0},{"x":2.2,"y":10.0},{"x":6.7,"y":10.0},{"x":5.1,"y":9.0},{"x":9.0,"y":10.0},{"x":8.8,"y":10.0},{"x":1.2,"y":10.0},{"x":7.1,"y":8.0},{"x":9.0,"y":6.0},{"x":4.4,"y":8.0},{"x":4.3,"y":8.0},{"x":8.2,"y":10.0},{"x":3.6,"y":10.0},{"x":4.9,"y":10.0},{"x":10.0,"y":10.0},{"x":7.5,"y":7.0},{"x":4.0,"y":8.0},{"x":6.8,"y":9.0},{"x":4.1,"y":7.0},{"x":5.5,"y":10.0},{"x":8.0,"y":9.0},{"x":9.1,"y":7.0},{"x":12.5,"y":9.0},{"x":7.3,"y":10.0},{"x":11.6,"y":7.0},{"x":5.7,"y":10.0},{"x":14.3,"y":5.0},{"x":4.2,"y":10.0},{"x":6.3,"y":10.0},{"x":3.7,"y":10.0},{"x":8.2,"y":8.0},{"x":5.7,"y":8.0},{"x":8.8,"y":10.0},{"x":4.0,"y":10.0},{"x":8.0,"y":8.0},{"x":4.8,"y":8.0},{"x":9.2,"y":8.0},{"x":4.4,"y":10.0},{"x":8.4,"y":7.0},{"x":3.2,"y":8.0},{"x":9.6,"y":10.0},{"x":7.5,"y":10.0},{"x":4.4,"y":10.0},{"x":3.8,"y":8.0},{"x":9.5,"y":7.0},{"x":4.6,"y":10.0},{"x":3.0,"y":10.0},{"x":13.6,"y":3.0},{"x":5.5,"y":9.0},{"x":9.2,"y":9.0},{"x":8.4,"y":8.0},{"x":5.7,"y":6.0},{"x":4.4,"y":6.0},{"x":6.1,"y":10.0},{"x":5.0,"y":9.0},{"x":9.3,"y":6.0},{"x":7.9,"y":10.0},{"x":8.4,"y":10.0},{"x":3.4,"y":10.0},{"x":7.3,"y":7.0},{"x":6.3,"y":8.0},{"x":11.0,"y":5.0},{"x":7.0,"y":9.0},{"x":6.5,"y":9.0},{"x":2.6,"y":10.0},{"x":2.1,"y":7.0},{"x":7.5,"y":10.0},{"x":5.6,"y":10.0},{"x":6.1,"y":8.0},{"x":9.9,"y":8.0},{"x":6.5,"y":8.0},{"x":6.4,"y":6.0},{"x":7.5,"y":7.0},{"x":8.3,"y":10.0},{"x":11.5,"y":6.0},{"x":5.5,"y":7.0},{"x":3.4,"y":8.0},{"x":7.6,"y":10.0},{"x":11.7,"y":3.0},{"x":3.7,"y":10.0},{"x":7.8,"y":8.0},{"x":7.3,"y":10.0},{"x":9.4,"y":5.0},{"x":8.1,"y":10.0},{"x":2.2,"y":10.0},{"x":10.2,"y":7.0},{"x":3.6,"y":8.0},{"x":5.9,"y":5.0},{"x":6.3,"y":10.0},{"x":5.0,"y":8.0},{"x":3.9,"y":10.0},{"x":4.1,"y":4.0},{"x":5.3,"y":8.0},{"x":8.2,"y":7.0},{"x":13.0,"y":9.0},{"x":9.0,"y":10.0},{"x":9.0,"y":3.0},{"x":11.1,"y":7.0},{"x":13.6,"y":6.0},{"x":14.4,"y":8.0},{"x":10.7,"y":7.0},{"x":9.5,"y":8.0},{"x":3.4,"y":10.0},{"x":5.7,"y":7.0},{"x":8.9,"y":9.0},{"x":4.7,"y":7.0},{"x":6.1,"y":7.0},{"x":8.7,"y":6.0},{"x":6.1,"y":10.0},{"x":7.3,"y":6.0},{"x":11.9,"y":10.0},{"x":5.2,"y":9.0},{"x":5.0,"y":7.0},{"x":6.9,"y":8.0},{"x":4.6,"y":7.0},{"x":9.6,"y":10.0},{"x":6.3,"y":10.0},{"x":6.6,"y":9.0},{"x":7.1,"y":7.0},{"x":12.0,"y":8.0},{"x":5.7,"y":10.0},{"x":9.0,"y":10.0},{"x":4.3,"y":10.0},{"x":9.0,"y":10.0},{"x":4.9,"y":10.0},{"x":4.7,"y":7.0},{"x":6.7,"y":8.0},{"x":8.8,"y":6.0},{"x":4.0,"y":10.0},{"x":1.9,"y":10.0},{"x":5.3,"y":9.0},{"x":8.7,"y":5.0},{"x":7.8,"y":3.0},{"x":8.7,"y":8.0},{"x":14.3,"y":6.0},{"x":4.4,"y":10.0},{"x":11.0,"y":7.0},{"x":9.2,"y":8.0},{"x":11.0,"y":6.0},{"x":7.7,"y":7.0},{"x":4.5,"y":8.0},{"x":11.0,"y":6.0},{"x":7.6,"y":10.0},{"x":4.8,"y":8.0},{"x":11.6,"y":5.0},{"x":5.6,"y":10.0},{"x":6.1,"y":10.0},{"x":4.3,"y":10.0},{"x":7.2,"y":7.0},{"x":3.0,"y":10.0},{"x":6.2,"y":7.0},{"x":9.6,"y":10.0},{"x":5.0,"y":9.0},{"x":4.7,"y":10.0},{"x":15.5,"y":2.0},{"x":9.2,"y":3.0},{"x":7.7,"y":10.0}],"top8":[{"id":"UID01288","screen":"18.0","state":"Karnataka","occ":"Freelancer"},{"id":"UID03032","screen":"18.0","state":"Delhi","occ":"Tech"},{"id":"UID03187","screen":"18.0","state":"Telangana","occ":"Student"},{"id":"UID03849","screen":"18.0","state":"Karnataka","occ":"Corporate"},{"id":"UID06196","screen":"18.0","state":"West Bengal","occ":"Student"},{"id":"UID06555","screen":"18.0","state":"Maharashtra","occ":"Corporate"},{"id":"UID07069","screen":"18.0","state":"Uttar Pradesh","occ":"Student"},{"id":"UID07754","screen":"18.0","state":"Maharashtra","occ":"Student"}]};
+
+// ══════════════════════════════════════════
+//  THEME TOGGLE
+// ══════════════════════════════════════════
+let isDark = true;
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('themeBtn').textContent = isDark ? '🌙 Dark Mode' : '☀️ Light Mode';
+  Chart.defaults.color = isDark ? '#7070a0' : '#6060a0';
+  Object.values(window.chartInstances || {}).forEach(c => {
+    c.options.scales && Object.values(c.options.scales).forEach(axis => {
+      if (axis.ticks) axis.ticks.color = isDark ? '#7070a0' : '#6060a0';
+      if (axis.grid) axis.grid.color = isDark ? '#1e1e30' : '#d0d0e8';
+    });
+    c.update();
+  });
+}
+
+// ══════════════════════════════════════════
+//  CHART DEFAULTS & BUILDER
+// ══════════════════════════════════════════
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#7070a0';
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+Chart.defaults.plugins.legend.labels.padding = 12;
+
+window.chartInstances = {};
+const GRID = { color: '#1e1e30', drawBorder: false };
+const TICKS = { color: '#7070a0', padding: 6 };
+
+function mkChart(id, config) {
+  const ctx = document.getElementById(id).getContext('2d');
+  const c = new Chart(ctx, config);
+  window.chartInstances[id] = c;
+  return c;
+}
+
+function downloadChart(id, name) {
+  const c = window.chartInstances[id];
+  if (!c) return;
+  const url = c.toBase64Image();
+  const a = document.createElement('a');
+  a.href = url; a.download = name + '.png'; a.click();
+}
+
+function buildCharts() {
+  const G = CHART_DATA;
+
+  mkChart('stateChart', {
+    type: 'bar',
+    data: {
+      labels: G.state_screen.map(d => d.state),
+      datasets: [{
+        label: 'Avg Screen Time (h)',
+        data: G.state_screen.map(d => d.avg),
+        backgroundColor: G.state_screen.map((_, i) => `hsla(${145 + i * 8},70%,45%,0.85)`),
+        borderRadius: 5, borderSkipped: false,
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw}h` } } },
+      scales: {
+        x: { grid: GRID, ticks: { ...TICKS, maxRotation: 35, font: { size: 10 } } },
+        y: { grid: GRID, ticks: TICKS, min: 6.5 }
+      }
+    }
+  });
+
+  mkChart('occChart', {
+    type: 'bar',
+    data: {
+      labels: G.occ_income.map(d => d.occ),
+      datasets: [{
+        label: 'Avg Income (₹K)',
+        data: G.occ_income.map(d => d.avg),
+        backgroundColor: ['#7c4dff88','#7c4dff99','#7c4dffaa','#7c4dffcc','#7c4dffdd','#7c4dff'],
+        borderRadius: 5, borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ₹${ctx.raw}K` } } },
+      scales: {
+        x: { grid: GRID, ticks: TICKS },
+        y: { grid: { display: false }, ticks: TICKS }
+      }
+    }
+  });
+
+  mkChart('genderChart', {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(G.gender),
+      datasets: [{
+        data: Object.values(G.gender),
+        backgroundColor: ['#1db954cc','#00b0ffcc','#ff4d6dcc'],
+        borderWidth: 0, hoverOffset: 8
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#7070a0', font: { size: 10 } } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()}` } }
+      }
+    }
+  });
+
+  mkChart('ageChart', {
+    type: 'line',
+    data: {
+      labels: G.age_screen.map(d => d.age),
+      datasets: [{
+        label: 'Avg Screen Time (h)',
+        data: G.age_screen.map(d => d.avg),
+        borderColor: '#00b0ff', backgroundColor: 'rgba(0,176,255,0.12)',
+        tension: 0.4, fill: true, pointRadius: 2, pointHoverRadius: 5, borderWidth: 2,
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: GRID, ticks: { ...TICKS, maxTicksLimit: 12 } },
+        y: { grid: GRID, ticks: TICKS }
+      }
+    }
+  });
+
+  mkChart('sleepStressChart', {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'User', data: G.scatter_sleep_stress,
+        backgroundColor: 'rgba(255,77,109,0.55)', pointRadius: 3, pointHoverRadius: 5,
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `Sleep ${ctx.parsed.x}h · Stress ${ctx.parsed.y}` }}},
+      scales: {
+        x: { grid: GRID, ticks: TICKS, title: { display: true, text: 'Sleep (h)', color: '#7070a0', font: { size: 10 } } },
+        y: { grid: GRID, ticks: TICKS, title: { display: true, text: 'Stress', color: '#7070a0', font: { size: 10 } } }
+      }
+    }
+  });
+
+  mkChart('wlbChart', {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'User', data: G.scatter_screen_wlb,
+        backgroundColor: 'rgba(124,77,255,0.55)', pointRadius: 3, pointHoverRadius: 5,
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `Screen ${ctx.parsed.x}h · WLB ${ctx.parsed.y}` }}},
+      scales: {
+        x: { grid: GRID, ticks: TICKS, title: { display: true, text: 'Screen Time (h)', color: '#7070a0', font: { size: 10 } } },
+        y: { grid: GRID, ticks: TICKS, title: { display: true, text: 'WLB Score', color: '#7070a0', font: { size: 10 } } }
+      }
+    }
+  });
+
+  mkChart('appChart', {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(G.app_dist),
+      datasets: [{
+        data: Object.values(G.app_dist),
+        backgroundColor: ['#1db954cc','#00b0ffcc','#7c4dffcc','#ff9f43cc'],
+        borderWidth: 0, hoverOffset: 8,
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#7070a0', font: { size: 10 } } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()}` } }
+      }
+    }
+  });
+}
+
+function buildTopUsers() {
+  const top8 = CHART_DATA.top8;
+  const maxScreen = 18;
+  const medals = ['🥇','🥈','🥉','4','5','6','7','8'];
+  const grid = document.getElementById('topUsersGrid');
+  grid.innerHTML = top8.map((u, i) => `
+    <div class="user-row">
+      <div class="user-rank ${i === 0 ? 'gold' : ''}">${medals[i]}</div>
+      <div class="user-id">${u.id}</div>
+      <div class="user-bar-wrap">
+        <div class="user-bar-bg"><div class="user-bar-fill" style="width:${(parseFloat(u.screen)/maxScreen*100).toFixed(1)}%"></div></div>
+        <div style="font-size:0.67rem;color:var(--muted);margin-top:2px">${u.state} · ${u.occ}</div>
+      </div>
+      <div class="user-val">${u.screen}h</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+//  VIRTUAL SCROLL TABLE (Updated CSV Filename)
+// ══════════════════════════════════════════
+const CSV_URL = 'data.csv'; // Path updated to data.csv
+let allRows = [];
+const ROW_HEIGHT = 30;
+const BUFFER = 40;
+let tableWrap, tableBody, rendered = {start:-1, end:-1};
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',');
+  return lines.slice(1).map(line => {
+    const vals = line.split(',');
+    const obj = {};
+    headers.forEach((h, i) => obj[h.trim()] = (vals[i] || '').trim());
+    return obj;
+  });
+}
+
+function renderRows(start, end) {
+  if (start === rendered.start && end === rendered.end) return;
+  rendered = {start, end};
+  const frag = document.createDocumentFragment();
+  const topSpacer = document.createElement('tr');
+  topSpacer.style.height = (start * ROW_HEIGHT) + 'px';
+  frag.appendChild(topSpacer);
+  for (let i = start; i < end && i < allRows.length; i++) {
+    const r = allRows[i];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="uid">${r.User_ID}</td>
+      <td>${r.State}</td><td>${r.City_Tier}</td><td>${r.Age}</td><td>${r.Gender}</td>
+      <td>${r.Occupation}</td><td>₹${parseInt(r.Income_INR||0).toLocaleString()}</td>
+      <td>${r.Total_Screen_Time}</td><td>${r.Social_Media_Hours}</td>
+      <td>${r.App_Usage_Category}</td><td>${r.Notification_Interaction_Rate}</td>
+      <td>${r.Sleep_Hours}</td><td>${r.Stress_Level}</td>
+      <td>${r.Physical_Activity_Level}</td><td>${r.Work_Life_Balance_Score}</td>`;
+    frag.appendChild(tr);
+  }
+  const remaining = Math.max(0, allRows.length - end);
+  const botSpacer = document.createElement('tr');
+  botSpacer.style.height = (remaining * ROW_HEIGHT) + 'px';
+  frag.appendChild(botSpacer);
+  tableBody.innerHTML = '';
+  tableBody.appendChild(frag);
+}
+
+function onScroll() {
+  const scrollTop = tableWrap.scrollTop;
+  const visibleHeight = tableWrap.clientHeight;
+  const startIdx = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER);
+  const endIdx = Math.min(allRows.length, Math.ceil((scrollTop + visibleHeight) / ROW_HEIGHT) + BUFFER);
+  renderRows(startIdx, endIdx);
+}
+
+async function loadTable() {
+  tableWrap = document.getElementById('tableWrap');
+  tableBody = document.getElementById('tableBody');
+  try {
+    const resp = await fetch(CSV_URL);
+    const text = await resp.text();
+    allRows = parseCSV(text);
+    document.getElementById('rowCounter').textContent = `Showing all ${allRows.length.toLocaleString()} rows`;
+    tableWrap.addEventListener('scroll', onScroll, { passive: true });
+    renderRows(0, Math.min(allRows.length, 80));
+  } catch(e) {
+    tableBody.innerHTML = `<tr><td colspan="15" style="text-align:center;padding:20px;color:var(--muted)">
+      ⚠️ Dataset table requires "data.csv" in the same folder.<br>
+      All analytical charts are functional above.</td></tr>`;
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  buildCharts();
+  buildTopUsers();
+  loadTable();
+});
+</script>
+</body>
+</html>
